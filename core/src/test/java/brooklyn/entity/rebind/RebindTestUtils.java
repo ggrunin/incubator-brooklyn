@@ -13,8 +13,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.collections.Maps;
 
-import com.google.common.collect.Iterables;
-
 import brooklyn.config.BrooklynProperties;
 import brooklyn.entity.Application;
 import brooklyn.entity.Entity;
@@ -34,6 +32,8 @@ import brooklyn.test.entity.LocalManagementContextForTests;
 import brooklyn.util.javalang.Serializers;
 import brooklyn.util.javalang.Serializers.ObjectReplacer;
 import brooklyn.util.time.Duration;
+
+import com.google.common.collect.Iterables;
 
 public class RebindTestUtils {
 
@@ -119,7 +119,8 @@ public class RebindTestUtils {
         BrooklynProperties properties;
         PersistenceObjectStore objectStore;
         Duration persistPeriod = Duration.millis(100);
-
+        boolean forLive;
+        
         ManagementContextBuilder(File mementoDir, ClassLoader classLoader) {
             this(classLoader, new FileBasedObjectStore(mementoDir));
         }
@@ -146,12 +147,25 @@ public class RebindTestUtils {
             return this;
         }
 
+        public ManagementContextBuilder forLive(boolean val) {
+            this.forLive = val;
+            return this;
+        }
+
         public LocalManagementContext buildUnstarted() {
             LocalManagementContext unstarted;
-            if (properties != null) {
-                unstarted = new LocalManagementContextForTests(properties);
+            if (forLive) {
+                if (properties != null) {
+                    unstarted = new LocalManagementContext(properties);
+                } else {
+                    unstarted = new LocalManagementContext();
+                }
             } else {
-                unstarted = new LocalManagementContextForTests();
+                if (properties != null) {
+                    unstarted = new LocalManagementContextForTests(properties);
+                } else {
+                    unstarted = new LocalManagementContextForTests();
+                }
             }
             
             objectStore.injectManagementContext(unstarted);
