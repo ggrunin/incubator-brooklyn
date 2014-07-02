@@ -2,6 +2,7 @@ package brooklyn.entity.rebind;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
@@ -28,14 +29,14 @@ public class RebindExceptionHandlerImpl implements RebindExceptionHandler {
     protected final RebindManager.RebindFailureMode danglingRefFailureMode;
     protected final RebindManager.RebindFailureMode rebindFailureMode;
 
-    protected final Set<String> missingEntities = Sets.newLinkedHashSet();
-    protected final Set<String> missingLocations = Sets.newLinkedHashSet();
-    protected final Set<String> missingPolicies = Sets.newLinkedHashSet();
-    protected final Set<String> missingEnrichers = Sets.newLinkedHashSet();
-    protected final Set<String> creationFailedEntities = Sets.newLinkedHashSet();
-    protected final Set<String> creationFailedLocations = Sets.newLinkedHashSet();
-    protected final Set<String> creationFailedPolicies = Sets.newLinkedHashSet();
-    protected final List<Exception> exceptions = Lists.newArrayList();
+    protected final Set<String> missingEntities = Sets.newConcurrentHashSet();
+    protected final Set<String> missingLocations = Sets.newConcurrentHashSet();
+    protected final Set<String> missingPolicies = Sets.newConcurrentHashSet();
+    protected final Set<String> missingEnrichers = Sets.newConcurrentHashSet();
+    protected final Set<String> creationFailedEntities = Sets.newConcurrentHashSet();
+    protected final Set<String> creationFailedLocations = Sets.newConcurrentHashSet();
+    protected final Set<String> creationFailedPolicies = Sets.newConcurrentHashSet();
+    protected final List<Exception> exceptions = Collections.synchronizedList(Lists.<Exception>newArrayList());
     
     public RebindExceptionHandlerImpl(RebindManager.RebindFailureMode danglingRefFailureMode, RebindManager.RebindFailureMode rebindFailureMode) {
         this.danglingRefFailureMode = checkNotNull(danglingRefFailureMode, "danglingRefFailureMode");

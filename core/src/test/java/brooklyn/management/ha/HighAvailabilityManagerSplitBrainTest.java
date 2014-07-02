@@ -79,7 +79,7 @@ public class HighAvailabilityManagerSplitBrainTest {
             objectStore.prepareForSharedUse(PersistMode.CLEAN, HighAvailabilityMode.DISABLED);
             persister = new ManagementPlaneSyncRecordPersisterToObjectStore(mgmt, objectStore, classLoader);
             ((ManagementPlaneSyncRecordPersisterToObjectStore)persister).allowRemoteTimestampInMemento();
-            BrooklynMementoPersisterToObjectStore persisterObj = new BrooklynMementoPersisterToObjectStore(objectStore, classLoader);
+            BrooklynMementoPersisterToObjectStore persisterObj = new BrooklynMementoPersisterToObjectStore(objectStore, mgmt.getBrooklynProperties(), classLoader);
             mgmt.getRebindManager().setPersister(persisterObj);
             ha = new HighAvailabilityManagerImpl(mgmt)
                 .setPollPeriod(Duration.PRACTICALLY_FOREVER)
