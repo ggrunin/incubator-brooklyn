@@ -45,6 +45,7 @@ import org.slf4j.LoggerFactory;
 
 import brooklyn.config.BrooklynProperties;
 import brooklyn.config.BrooklynServerConfig;
+import brooklyn.config.BrooklynServerConfig.CatalogLoadMode;
 import brooklyn.config.BrooklynServiceAttributes;
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.Application;
@@ -147,6 +148,7 @@ public class BrooklynLauncher {
     private HighAvailabilityMode highAvailabilityMode = HighAvailabilityMode.DISABLED;
     private String persistenceDir;
     private String persistenceLocation;
+    private boolean persistCatalog;
     private Duration persistPeriod = Duration.ONE_SECOND;
     private Duration haHeartbeatTimeout = Duration.THIRTY_SECONDS;
     private Duration haHeartbeatPeriod = Duration.ONE_SECOND;
@@ -249,6 +251,11 @@ public class BrooklynLauncher {
 
     public BrooklynLauncher persistenceLocation(@Nullable String persistenceLocationSpec) {
         persistenceLocation = persistenceLocationSpec;
+        return this;
+    }
+
+    public BrooklynLauncher persistCatalog(boolean persistCatalog) {
+        this.persistCatalog = persistCatalog;
         return this;
     }
 
@@ -485,12 +492,14 @@ public class BrooklynLauncher {
     public BrooklynLauncher start() {
         if (started) throw new IllegalStateException("Cannot start() or launch() multiple times");
         started = true;
-        
+
+        CatalogLoadMode catalogLoadMode = (persistMode == PersistMode.DISABLED || !persistCatalog)
+                ? CatalogLoadMode.LOAD_BROOKLYN_CATALOG_URL
+                : CatalogLoadMode.LOAD_BROOKLYN_CATALOG_URL_IF_NO_PERSISTED_STATE;
+        brooklynProperties(BrooklynServerConfig.CATALOG_LOAD_MODE, catalogLoadMode);
+
         // Create the management context
         initManagementContext();
-
-        // Create the locations
-        locations.addAll(managementContext.getLocationRegistry().resolve(locationSpecs));
 
         // Add a CAMP platform (TODO include a flag for this?)
         campPlatform = new BrooklynCampPlatformLauncherNoServer()
@@ -505,7 +514,12 @@ public class BrooklynLauncher {
         } catch (Exception e) {
             handleSubsystemStartupError(ignorePersistenceErrors, "persistence", e);
         }
-        
+
+        // Create the locations. Must happen after persistence is started in case the
+        // management context's catalog is loaded from persisted state. (Location
+        // resolution uses the catalog's classpath to scan for resolvers.)
+        locations.addAll(managementContext.getLocationRegistry().resolve(locationSpecs));
+
         // Start the web-console
         if (startWebApps) {
             try {
@@ -521,7 +535,7 @@ public class BrooklynLauncher {
         } catch (Exception e) {
             handleSubsystemStartupError(ignoreAppErrors, "managed apps", e);
         }
-        
+
         return this;
     }
 

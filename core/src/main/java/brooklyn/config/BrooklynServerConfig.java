@@ -38,9 +38,22 @@ import brooklyn.util.os.Os;
 /** config keys for the brooklyn server */
 public class BrooklynServerConfig {
 
-
     private static final Logger log = LoggerFactory.getLogger(BrooklynServerConfig.class);
-    
+
+    public static enum CatalogLoadMode {
+        /**
+         * The server will load its initial catalog from the URL configured in
+         * {@link #BROOKLYN_CATALOG_URL} and will disregard existing persisted state.
+         */
+        LOAD_BROOKLYN_CATALOG_URL,
+
+        /**
+         * The server will load its initial catalog from previously persisted state,
+         * and will behave as {@link #LOAD_BROOKLYN_CATALOG_URL} if no state exists.
+         */
+        LOAD_BROOKLYN_CATALOG_URL_IF_NO_PERSISTED_STATE,
+    }
+
     /** provided for setting; consumers should use {@link #getMgmtBaseDir(ManagementContext)} */ 
     public static final ConfigKey<String> MGMT_BASE_DIR = newStringConfigKey(
             "brooklyn.base.dir", "Directory for reading and writing all brooklyn server data", 
@@ -73,6 +86,23 @@ public class BrooklynServerConfig {
             + "if false, the persistence store will be overwritten with changes (but files not removed if they are unreadable); "
             + "if null or not set, the legacy beahviour of creating backups where possible (e.g. file system) is currently used, "
             + "but this may be changed in future versions");
+
+    public static final ConfigKey<String> BROOKLYN_CATALOG_URL = ConfigKeys.newStringConfigKey("brooklyn.catalog.url",
+        "The URL of a catalog.xml descriptor; absent for default (~/.brooklyn/catalog.xml), " +
+        "or empty for no URL (use default scanner)",
+        new File(Os.fromHome(".brooklyn/catalog.xml")).toURI().toString());
+
+    public static final ConfigKey<CatalogLoadMode> CATALOG_LOAD_MODE = ConfigKeys.newConfigKey(CatalogLoadMode.class,
+            "brooklyn.catalog.mode",
+            "The mode the management context should use to load the catalog when first starting",
+            CatalogLoadMode.LOAD_BROOKLYN_CATALOG_URL);
+
+    public static final ConfigKey<Boolean> USE_OSGI = ConfigKeys.newBooleanConfigKey("brooklyn.osgi.enabled",
+        "Whether OSGi is enabled, defaulting to true", true);
+
+    public static final ConfigKey<CampPlatform> CAMP_PLATFORM = ConfigKeys.newConfigKey(CampPlatform.class, "brooklyn.camp.platform",
+        "Config set at brooklyn management platform to find the CampPlatform instance (bi-directional)");
+
 
     public static String getMgmtBaseDir(ManagementContext mgmt) {
         return getMgmtBaseDir(mgmt.getConfig());
@@ -146,17 +176,6 @@ public class BrooklynServerConfig {
             throw e2;
         }
     }
-
-    public static final ConfigKey<String> BROOKLYN_CATALOG_URL = ConfigKeys.newStringConfigKey("brooklyn.catalog.url",
-        "The URL of a catalog.xml descriptor; absent for default (~/.brooklyn/catalog.xml), " +
-        "or empty for no URL (use default scanner)", 
-        new File(Os.fromHome(".brooklyn/catalog.xml")).toURI().toString());
-    
-    public static final ConfigKey<Boolean> USE_OSGI = ConfigKeys.newBooleanConfigKey("brooklyn.osgi.enabled",
-        "Whether OSGi is enabled, defaulting to true", true);
-
-    public static final ConfigKey<CampPlatform> CAMP_PLATFORM = ConfigKeys.newConfigKey(CampPlatform.class, "brooklyn.camp.platform",
-        "Config set at brooklyn management platform to find the CampPlatform instance (bi-directional)");
 
     /** Returns the CAMP platform associated with a management context, if there is one. */
     public static Maybe<CampPlatform> getCampPlatform(ManagementContext mgmt) {
