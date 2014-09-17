@@ -25,12 +25,16 @@ import java.util.Map;
 
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.Application;
+import brooklyn.entity.Effector;
 import brooklyn.entity.Entity;
 import brooklyn.entity.trait.Identifiable;
 import brooklyn.event.AttributeSensor;
 import brooklyn.management.ManagementContext;
+import brooklyn.management.Task;
+import brooklyn.util.collections.MutableMap;
 import brooklyn.util.flags.TypeCoercions;
 import brooklyn.util.guava.Functionals;
+import brooklyn.util.task.Tasks;
 
 import com.google.common.base.Function;
 import com.google.common.base.Supplier;
@@ -128,4 +132,25 @@ public class EntityFunctions {
         }
         return new AppsSupplier();
     }
+
+    public static <T> Function<Entity,Task<T>> invocation(final Effector<T> eff) {
+        return invocation(eff, MutableMap.<String,Object>of());
+    }
+    public static <T> Function<Entity,Task<T>> invocation(final Effector<T> eff, final Map<String,?> params) {
+        class EffectorInvocationFunction implements Function<Entity,Task<T>> {
+            @Override
+            public Task<T> apply(Entity input) {
+                return input.invoke(eff, params);
+            }
+        }
+        return new EffectorInvocationFunction();
+    }
+
+    public static <T> Function<Entity,T> invoke(final Effector<T> eff) {
+        return invoke(eff, MutableMap.<String,Object>of());
+    }
+    public static <T> Function<Entity,T> invoke(final Effector<T> eff, final Map<String,?> params) {
+        return Functionals.chain(invocation(eff, params), Tasks.<T>getFunction());
+    }
+
 }

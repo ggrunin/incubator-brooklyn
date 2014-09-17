@@ -32,6 +32,7 @@ import brooklyn.entity.basic.SoftwareProcess;
 import brooklyn.entity.effector.Effectors;
 import brooklyn.entity.java.UsesJava;
 import brooklyn.entity.proxying.ImplementedBy;
+import brooklyn.entity.trait.Startable;
 import brooklyn.event.AttributeSensor;
 import brooklyn.event.basic.BasicAttributeSensor;
 import brooklyn.event.basic.BasicAttributeSensorAndConfigKey;
@@ -231,7 +232,7 @@ public interface BrooklynNode extends SoftwareProcess, UsesJava {
         ConfigKey<Duration> REQUEST_TIMEOUT = ConfigKeys.newConfigKey(Duration.class, "requestTimeout", "Maximum time to block the request for the shutdown to finish, 0 to wait infinitely");
         ConfigKey<Duration> DELAY_FOR_HTTP_RETURN = ConfigKeys.newConfigKey(Duration.class, "delayForHttpReturn", "The delay before exiting the process, to permit the REST response to be returned");
         Effector<Void> SHUTDOWN = Effectors.effector(Void.class, "shutdown")
-            .description("Shutdown the remote brooklyn instance")
+            .description("Shutdown the remote Brooklyn process, and if requested first shut down the applications or systems it is managing")
             .parameter(STOP_APPS_FIRST)
             .parameter(FORCE_SHUTDOWN_ON_ERROR)
             .parameter(SHUTDOWN_TIMEOUT)
@@ -245,7 +246,7 @@ public interface BrooklynNode extends SoftwareProcess, UsesJava {
     public interface StopNodeButLeaveAppsEffector {
         ConfigKey<Duration> TIMEOUT = ConfigKeys.newConfigKey(Duration.class, "timeout", "How long to wait before giving up on stopping the node", Duration.ONE_HOUR);
         Effector<Void> STOP_NODE_BUT_LEAVE_APPS = Effectors.effector(Void.class, "stopNodeButLeaveApps")
-                .description("Stop the node but if it was managing other applications, leave them running")
+                .description("Stop the remote Brooklyn process but if it was managing any apps, leave them running")
                 .parameter(TIMEOUT)
                 .buildAbstract();
     }
@@ -255,13 +256,16 @@ public interface BrooklynNode extends SoftwareProcess, UsesJava {
     public interface StopNodeAndKillAppsEffector {
         ConfigKey<Duration> TIMEOUT = ConfigKeys.newConfigKey(Duration.class, "timeout", "How long to wait before giving up on stopping the node", Duration.ONE_HOUR);
         Effector<Void> STOP_NODE_AND_KILL_APPS = Effectors.effector(Void.class, "stopNodeAndKillApps")
-                .description("Stop all apps managed by the node and shutdown the node")
+                .description("Stop all apps managed by the node then shutdown the remote Brooklyn process")
                 .parameter(TIMEOUT)
                 .buildAbstract();
     }
 
     public static final Effector<Void> STOP_NODE_AND_KILL_APPS = StopNodeAndKillAppsEffector.STOP_NODE_AND_KILL_APPS;
 
+    public static final Effector<Void> STOP = Effectors.effector(Startable.STOP).description("Stops the Brooklyn node; not permitted if it is managing applications "
+        + "(to prevent ambiguity in whether those apps should be stopped)").build();
+    
     public EntityHttpClient http();
 
 }

@@ -42,6 +42,7 @@ import brooklyn.entity.Entity;
 import brooklyn.entity.basic.BasicApplication;
 import brooklyn.entity.basic.BasicApplicationImpl;
 import brooklyn.entity.basic.Entities;
+import brooklyn.entity.basic.EntityFunctions;
 import brooklyn.entity.brooklynnode.BrooklynNode.DeployBlueprintEffector;
 import brooklyn.entity.brooklynnode.BrooklynNode.ExistingFileBehaviour;
 import brooklyn.entity.proxying.EntitySpec;
@@ -115,7 +116,16 @@ public class BrooklynNodeIntegrationTest {
 
     @AfterMethod(alwaysRun=true)
     public void tearDown() throws Exception {
-        if (app != null) Entities.destroyAll(app.getManagementSupport().getManagementContext());
+        if (app != null) {
+            try { 
+                // copy to force the lazy evaluation
+                ImmutableList.copyOf(Iterables.transform(Entities.descendants(app, BrooklynNode.class),
+                    EntityFunctions.invoke(BrooklynNode.STOP_NODE_AND_KILL_APPS)));
+            } catch (Exception e) {
+                log.warn("Error shutting down brooklyn: "+e, e);
+            }
+            Entities.destroyAll(app.getManagementSupport().getManagementContext());
+        }
         if (pseudoBrooklynPropertiesFile != null) pseudoBrooklynPropertiesFile.delete();
         if (pseudoBrooklynCatalogFile != null) pseudoBrooklynCatalogFile.delete();
     }

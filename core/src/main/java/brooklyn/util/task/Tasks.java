@@ -272,12 +272,22 @@ public class Tasks {
     
     /** see also {@link #resolving(Object)} which gives much more control about submission, timeout, etc */
     public static <T> Supplier<T> supplier(final TaskAdaptable<T> task) {
-        return new Supplier<T>() {
+        class TaskAsSupplier implements Supplier<T> {
             @Override
             public T get() {
                 return task.asTask().getUnchecked();
             }
-        };
+        }
+        return new TaskAsSupplier();
+    }
+    static class TaskGetFunction<T> implements Function<TaskAdaptable<T>,T> {
+        @Override
+        public T apply(TaskAdaptable<T> input) {
+            return input.asTask().getUnchecked();
+        }
+    }
+    public static <T> Function<TaskAdaptable<T>,T> getFunction() {
+        return new TaskGetFunction<T>();
     }
     
     /** return all children tasks of the given tasks, if it has children, else empty list */
@@ -370,5 +380,4 @@ public class Tasks {
         Task<?> t = Tasks.current();
         if (t!=null) TaskTags.addTagDynamically(t, tag);
     }
-    
 }

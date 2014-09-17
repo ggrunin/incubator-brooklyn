@@ -33,6 +33,8 @@ import brooklyn.entity.Entity;
 import brooklyn.entity.basic.Attributes;
 import brooklyn.entity.basic.Entities;
 import brooklyn.entity.basic.Lifecycle;
+import brooklyn.entity.basic.Lifecycle.Transition;
+import brooklyn.entity.basic.ServiceStateLogic;
 import brooklyn.entity.basic.SoftwareProcessImpl;
 import brooklyn.entity.effector.EffectorBody;
 import brooklyn.entity.effector.Effectors;
@@ -90,7 +92,8 @@ public class BrooklynNodeImpl extends SoftwareProcessImpl implements BrooklynNod
 
     @Override
     protected void doStop() {
-        Preconditions.checkState(getChildren().isEmpty(), "Can't stop instance with running applications.");
+        Preconditions.checkState(getChildren().isEmpty(), "Not permitted to invoke plain 'stop' on an instance with running applications; "
+            + "invoke a specific 'stop_...' method to clarify behaviour with respect to the managed applications");
         DynamicTasks.queue(Effectors.invocation(this, ShutdownEffectorBody.SHUTDOWN, MutableMap.of(ShutdownEffector.REQUEST_TIMEOUT, Duration.ONE_MINUTE)));
         super.doStop();
     }
@@ -174,20 +177,26 @@ public class BrooklynNodeImpl extends SoftwareProcessImpl implements BrooklynNod
                     .addIfNotNull("requestTimeout", toNullableString(parameters.get(REQUEST_TIMEOUT)))
                     .addIfNotNull("delayForHttpReturn", toNullableString(parameters.get(DELAY_FOR_HTTP_RETURN)));
             try {
+                ServiceStateLogic.setExpectedState(entity(), Lifecycle.STOPPING);
+                ServiceStateLogic.ServiceProblemsLogic.clearProblemsIndicator(entity(), SHUTDOWN);
                 HttpToolResponse resp = ((BrooklynNode)entity()).http()
                     .post("/v1/server/shutdown", MutableMap.<String, String>of(), formParams);
                 if (resp.getResponseCode() != HttpStatus.SC_NO_CONTENT) {
                     throw new IllegalStateException("Response code "+resp.getResponseCode());
                 }
             } catch (Exception e) {
-                Exceptions.propagateIfFatal(e);
                 Lifecycle state = entity().getAttribute(Attributes.SERVICE_STATE_ACTUAL);
+                Exceptions.propagateIfFatal(e);
+                log.debug("Error shutting down remote node "+entity()+" (in state "+state+"), rethrowing: "+Exceptions.collapseText(e));
                 if (state!=Lifecycle.RUNNING) {
                     // ignore failure in this task if the node is not currently running
                     Tasks.markInessential();
+                } else {
+                    ServiceStateLogic.ServiceProblemsLogic.updateProblemsIndicator(entity(), SHUTDOWN, "Shutdown failed: "+e);
                 }
                 throw new PropagatedRuntimeException("Error shutting down remote node "+entity()+" (in state "+state+"): "+Exceptions.collapseText(e), e);
             }
+            ServiceStateLogic.setExpectedState(entity(), Lifecycle.STOPPED);
             return null;
         }
 

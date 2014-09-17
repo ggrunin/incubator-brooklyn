@@ -28,6 +28,7 @@ import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
 import brooklyn.entity.basic.Attributes;
+import brooklyn.entity.basic.BrooklynConfigKeys;
 import brooklyn.entity.basic.Entities;
 import brooklyn.entity.drivers.downloads.DownloadResolver;
 import brooklyn.entity.proxying.EntitySpec;
@@ -72,7 +73,7 @@ public class BrooklynNodeTest {
     
     private void runTestGeneratesCorrectDownloadUrl(String version, String expectedUrl) throws Exception {
         BrooklynNodeImpl entity = new BrooklynNodeImpl();
-        entity.configure(MutableMap.of("version", version));
+        entity.configure(BrooklynConfigKeys.SUGGESTED_VERSION, version);
         entity.setParent(app);
         Entities.manage(entity);
         ConfigToAttributes.apply(entity);

@@ -19,7 +19,6 @@
 package brooklyn.entity.trait;
 
 import java.util.Collection;
-import java.util.Collections;
 
 import brooklyn.config.ConfigKey;
 import brooklyn.entity.Effector;
@@ -32,7 +31,6 @@ import brooklyn.entity.effector.Effectors;
 import brooklyn.event.AttributeSensor;
 import brooklyn.location.Location;
 import brooklyn.util.config.ConfigBag;
-import brooklyn.util.text.StringEscapes.JavaStringEscapes;
 
 /**
  * This interface describes an {@link brooklyn.entity.Entity} that can be started and stopped.
@@ -66,18 +64,18 @@ public interface Startable {
     /**
      * Start the entity in the given collection of locations.
      */
-    @brooklyn.entity.annotation.Effector(description="Start the process/service represented by an entity")
+    @brooklyn.entity.annotation.Effector(description="Start the system represented by an entity")
     void start(@EffectorParam(name="locations") Collection<? extends Location> locations);
 
     /**
      * Stop the entity.
      */
-    @brooklyn.entity.annotation.Effector(description="Stop the process/service represented by an entity")
+    @brooklyn.entity.annotation.Effector(description="Stop the system represented by an entity")
     void stop();
 
     /**
      * Restart the entity.
      */
-    @brooklyn.entity.annotation.Effector(description="Restart the process/service represented by an entity")
+    @brooklyn.entity.annotation.Effector(description="Restart the system represented by an entity")
     void restart();
 }
