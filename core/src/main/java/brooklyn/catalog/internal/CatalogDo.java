@@ -38,6 +38,7 @@ import brooklyn.util.net.Urls;
 import brooklyn.util.time.CountdownTimer;
 import brooklyn.util.time.Duration;
 
+import com.google.api.client.util.Maps;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Lists;
 
@@ -53,7 +54,8 @@ public class CatalogDo {
     List<CatalogDo> childrenCatalogs = new ArrayList<CatalogDo>();
     CatalogClasspathDo classpath;
     Map<String, CatalogItemDo<?,?>> cache;
-    
+    Map<String, CatalogItemDo<?,?>> registeredTypeNameCache;
+
     AggregateClassLoader childrenClassLoader = AggregateClassLoader.newInstanceWithNoLoaders();
     ClassLoader recursiveClassLoader;
 
@@ -158,7 +160,13 @@ public class CatalogDo {
         if (cache==null) cache = buildCache();
         return cache;
     }
-    
+
+    protected Map<String, CatalogItemDo<?,?>> getRegisteredTypeNameCache() {
+        Map<String, CatalogItemDo<?,?>> cache = this.registeredTypeNameCache;
+        if (cache==null) cache = buildCache();
+        return cache;
+    }
+
     @SuppressWarnings({ "unchecked", "rawtypes" })
     protected synchronized Map<String, CatalogItemDo<?,?>> buildCache() {
         if (cache!=null) return cache;
@@ -185,42 +193,53 @@ public class CatalogDo {
             for (CatalogItemDtoAbstract<?,?> entry: entriesReversed)
                 cache.put(entry.getId(), new CatalogItemDo(this, entry));
         }
-        
+        Map<String, CatalogItemDo<?, ?>> typeNameCache = Maps.newHashMap();
+        for (CatalogItemDo<?, ?> entry : cache.values()) {
+            typeNameCache.put(entry.getRegisteredTypeName(), entry);
+        }
         this.cache = cache;
+        this.registeredTypeNameCache = typeNameCache;
         return cache;
     }
     
     protected synchronized void clearCache(boolean deep) {
         this.cache = null;
-        if (deep) 
-            for (CatalogDo child: childrenCatalogs) child.clearCache(true); 
+        this.registeredTypeNameCache = null;
+        if (deep) {
+            for (CatalogDo child : childrenCatalogs) {
+                child.clearCache(true);
+            }
+        }
     }
     
-    /** adds the given entry to the catalog, with no enrichment;
-     * callers may prefer {@link CatalogClasspathDo#addCatalogEntry(CatalogItemDtoAbstract, Class)}
+    /**
+     * Adds the given entry to the catalog, with no enrichment.
+     * Callers may prefer {@link CatalogClasspathDo#addCatalogEntry(CatalogItemDtoAbstract, Class)}
      */
     @SuppressWarnings({ "unchecked", "rawtypes" })
     public synchronized void addEntry(CatalogItemDtoAbstract<?,?> entry) {
         if (dto.entries==null) 
             dto.entries = new ArrayList<CatalogItemDtoAbstract<?,?>>();
         dto.entries.add(entry);
-        if (cache!=null)
-            cache.put(entry.getId(), new CatalogItemDo(this, entry));
-    }
+        if (cache!=null) {
+            CatalogItemDo<?, ?> cdo = new CatalogItemDo(this, entry);
+            cache.put(entry.getId(), cdo);
+            registeredTypeNameCache.put(entry.getRegisteredTypeName(), cdo);
+        }
+        mgmt.getRebindManager().getChangeListener().onManaged(entry);
+   }
 
+    /**
+     * Removes the given entry from the catalog.
+     */
     public synchronized void deleteEntry(CatalogItemDtoAbstract<?, ?> entry) {
         if (dto.entries != null)
             dto.entries.remove(entry);
-        if (cache!=null)
+        if (cache!=null) {
             cache.remove(entry.getId());
-    }
-
-    /** removes the given entry from the catalog;
-     */
-    public synchronized void removeEntry(CatalogItemDtoAbstract<?,?> entry) {
-        dto.entries.remove(entry);
-        if (cache!=null)
-            cache.remove(entry.getId());
+            registeredTypeNameCache.remove(entry.getRegisteredTypeName());
+        }
+        mgmt.getRebindManager().getChangeListener().onUnmanaged(entry);
     }
 
     /** returns loaded catalog, if this has been loaded */

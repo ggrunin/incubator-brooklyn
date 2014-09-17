@@ -18,14 +18,16 @@
  */
 package brooklyn.catalog;
 
+import java.util.Collection;
 import java.util.NoSuchElementException;
 
 import com.google.common.base.Predicate;
 
 public interface BrooklynCatalog {
 
-    /** @return The item with the given ID, or null if not found */
-    CatalogItem<?,?> getCatalogItem(String id);
+    /** @return The item with the given ID or {@link brooklyn.catalog.CatalogItem#getRegisteredTypeName()
+     * registeredTypeName}, or null if not found. */
+    CatalogItem<?,?> getCatalogItem(String idOrRegisteredTypeName);
 
     /** @return Deletes the item with the given ID
      * @throws NoSuchElementException if not found */
@@ -56,7 +58,6 @@ public interface BrooklynCatalog {
     @Deprecated
     <T> Class<? extends T> loadClassByType(String typeName, Class<T> typeClass);
 
-    
     /**
      * Adds an item (represented in yaml) to the catalog.
      * 
@@ -86,5 +87,7 @@ public interface BrooklynCatalog {
      */
     @Deprecated
     CatalogItem<?,?> addItem(Class<?> clazz);
+
+    void reset(Collection<CatalogItem<?, ?>> entries);
 
 }

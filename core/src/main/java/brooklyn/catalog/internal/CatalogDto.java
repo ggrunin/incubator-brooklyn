@@ -20,18 +20,30 @@ package brooklyn.catalog.internal;
 
 import java.io.InputStream;
 import java.io.StringReader;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import brooklyn.basic.AbstractBrooklynObjectSpec;
+import brooklyn.basic.BrooklynObject;
+import brooklyn.catalog.BasicCatalogItem;
+import brooklyn.catalog.CatalogItem;
 import brooklyn.util.ResourceUtils;
+import brooklyn.util.collections.MutableMap;
 import brooklyn.util.exceptions.Exceptions;
 import brooklyn.util.exceptions.PropagatedRuntimeException;
+import brooklyn.util.flags.FlagUtils;
 import brooklyn.util.stream.Streams;
 
+import com.google.api.client.util.Maps;
 import com.google.common.annotations.Beta;
 import com.google.common.base.Objects;
+import com.google.common.collect.FluentIterable;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.Lists;
 
 @Beta
 public class CatalogDto {
@@ -39,9 +51,7 @@ public class CatalogDto {
     private static final Logger LOG = LoggerFactory.getLogger(CatalogDto.class);
 
     String id;
-    /** e.g. url */
     String url;
-    
     String contents;
     String contentsDescription;
     String name;
@@ -75,7 +85,7 @@ public class CatalogDto {
     public static CatalogDto newDtoFromXmlContents(String xmlContents, String originDescription) {
         CatalogDto result = (CatalogDto) new CatalogXmlSerializer().deserialize(new StringReader(xmlContents));
         result.contentsDescription = originDescription;
-        
+
         if (LOG.isDebugEnabled()) LOG.debug("Retrieved catalog from: {}", originDescription);
         return result;
     }
@@ -105,6 +115,17 @@ public class CatalogDto {
         CatalogDto result = new CatalogDto();
         result.contentsDescription = url;
         result.contents = ResourceUtils.create().getResourceAsString(url);
+        return result;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static CatalogDto newDtoFromCatalogItems(Collection<CatalogItem<?, ?>> entries) {
+        CatalogDto result = new CatalogDto();
+        // Weird casts because compiler does not seem to like
+        // .copyInto(Lists.<CatalogItemDtoAbstract<?, ?>>newArrayListWithExpectedSize(entries.size()));
+        result.entries = (List<CatalogItemDtoAbstract<?, ?>>) (List) FluentIterable.from(entries)
+                .filter(CatalogItemDtoAbstract.class)
+                .copyInto(Lists.newArrayListWithExpectedSize(entries.size()));
         return result;
     }
     

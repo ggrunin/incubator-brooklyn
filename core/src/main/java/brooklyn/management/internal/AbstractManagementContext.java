@@ -35,10 +35,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import brooklyn.catalog.BrooklynCatalog;
+import brooklyn.catalog.CatalogItem;
 import brooklyn.catalog.internal.BasicBrooklynCatalog;
 import brooklyn.catalog.internal.CatalogClasspathDo.CatalogScanningModes;
 import brooklyn.catalog.internal.CatalogDto;
 import brooklyn.config.BrooklynProperties;
+import brooklyn.config.BrooklynServerConfig;
 import brooklyn.config.StringConfigMap;
 import brooklyn.entity.Effector;
 import brooklyn.entity.Entity;
@@ -327,47 +329,28 @@ public abstract class AbstractManagementContext implements ManagementContextInte
 
     @Override
     public BrooklynCatalog getCatalog() {
-        if (catalog==null) loadCatalog();
+        if (catalog==null) {
+            loadCatalog();
+        }
         return catalog;
     }
 
     protected synchronized void loadCatalog() {
-        if (catalog!=null) return;
-        
-        BasicBrooklynCatalog catalog = null;
-        String catalogUrl = getConfig().getConfig(BROOKLYN_CATALOG_URL);
-        
-        try {
-            if (!Strings.isEmpty(catalogUrl)) {
-                catalog = new BasicBrooklynCatalog(this, CatalogDto.newDtoFromUrl(catalogUrl));
-                if (log.isDebugEnabled())
-                    log.debug("Loading catalog from "+catalogUrl+": "+catalog);
-            }
-        } catch (Exception e) {
-            if (Throwables.getRootCause(e) instanceof FileNotFoundException) {
-                Maybe<Object> nonDefaultUrl = getConfig().getConfigRaw(BROOKLYN_CATALOG_URL, true);
-                if (nonDefaultUrl.isPresentAndNonNull() && !"".equals(nonDefaultUrl.get())) {
-                    log.warn("Could not find catalog XML specified at "+nonDefaultUrl+"; using default (local classpath) catalog. Error was: "+e);
-                } else {
-                    if (log.isDebugEnabled())
-                        log.debug("No default catalog file available at "+catalogUrl+"; trying again using local classpath to populate catalog. Error was: "+e);
-                }
-            } else {
-                log.warn("Error importing catalog XML at "+catalogUrl+"; using default (local classpath) catalog. Error was: "+e, e);                
-            }
+        if (catalog != null) return;
+        BasicBrooklynCatalog catalog = new BasicBrooklynCatalog(this);
+        BrooklynServerConfig.CatalogLoadMode loadMode = getConfig().getConfig(BrooklynServerConfig.CATALOG_LOAD_MODE);
+        if (log.isDebugEnabled()) {
+            log.debug("Catalog load mode is: {}", loadMode.name());
         }
-        if (catalog==null) {
-            // retry, either an error, or was blank
-            catalog = new BasicBrooklynCatalog(this, CatalogDto.newDefaultLocalScanningDto(CatalogScanningModes.ANNOTATIONS));
-            if (log.isDebugEnabled())
-                log.debug("Loaded default (local classpath) catalog: "+catalog);
+        if (BrooklynServerConfig.CatalogLoadMode.LOAD_BROOKLYN_CATALOG_URL.equals(loadMode)) {
+            catalog.resetCatalogToContentsAtConfiguredUrl();
         }
-        catalog.load();
-        
+        // Otherwise leaving persistence to trigger initial load of catalogue.
         this.catalog = catalog;
     }
 
-    /** Optional class-loader that this management context should use as its base,
+    /**
+     * Optional class-loader that this management context should use as its base,
      * as the first-resort in the catalog, and for scanning (if scanning the default in the catalog).
      * In most instances the default classloader (ManagementContext.class.getClassLoader(), assuming
      * this was in the JARs used at boot time) is fine, and in those cases this method normally returns null.
