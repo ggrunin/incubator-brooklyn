@@ -22,27 +22,19 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import brooklyn.basic.AbstractBrooklynObjectSpec;
-import brooklyn.basic.BrooklynObject;
-import brooklyn.catalog.BasicCatalogItem;
 import brooklyn.catalog.CatalogItem;
 import brooklyn.util.ResourceUtils;
-import brooklyn.util.collections.MutableMap;
 import brooklyn.util.exceptions.Exceptions;
 import brooklyn.util.exceptions.PropagatedRuntimeException;
-import brooklyn.util.flags.FlagUtils;
 import brooklyn.util.stream.Streams;
 
-import com.google.api.client.util.Maps;
 import com.google.common.annotations.Beta;
 import com.google.common.base.Objects;
 import com.google.common.collect.FluentIterable;
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 
 @Beta
@@ -118,7 +110,7 @@ public class CatalogDto {
         return result;
     }
 
-    @SuppressWarnings("unchecked")
+    @SuppressWarnings({ "unchecked", "rawtypes" })
     public static CatalogDto newDtoFromCatalogItems(Collection<CatalogItem<?, ?>> entries) {
         CatalogDto result = new CatalogDto();
         // Weird casts because compiler does not seem to like
