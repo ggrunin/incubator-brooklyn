@@ -20,7 +20,6 @@ package brooklyn.entity.rebind;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -40,9 +39,9 @@ import brooklyn.catalog.CatalogLoadMode;
 import brooklyn.catalog.internal.BasicBrooklynCatalog;
 import brooklyn.catalog.internal.CatalogUtils;
 import brooklyn.config.BrooklynLogging;
+import brooklyn.config.BrooklynLogging.LoggingLevel;
 import brooklyn.config.BrooklynServerConfig;
 import brooklyn.config.ConfigKey;
-import brooklyn.config.BrooklynLogging.LoggingLevel;
 import brooklyn.enricher.basic.AbstractEnricher;
 import brooklyn.entity.Application;
 import brooklyn.entity.Entity;
@@ -451,7 +450,7 @@ public class RebindManagerImpl implements RebindManager {
     }
     
     @Override
-    public BrooklynMementoRawData retrieveMementoRawData() throws IOException {
+    public BrooklynMementoRawData retrieveMementoRawData() {
         RebindExceptionHandler exceptionHandler = RebindExceptionHandlerImpl.builder()
                 .danglingRefFailureMode(danglingRefFailureMode)
                 .rebindFailureMode(rebindFailureMode)
@@ -467,7 +466,7 @@ public class RebindManagerImpl implements RebindManager {
      * 
      * In so doing, it instantiates the entities + locations, registering them with the rebindContext.
      */
-    protected BrooklynMementoRawData loadMementoRawData(final RebindExceptionHandler exceptionHandler) throws IOException {
+    protected BrooklynMementoRawData loadMementoRawData(final RebindExceptionHandler exceptionHandler) {
         try {
             if (!(persistenceStoreAccess instanceof BrooklynMementoPersisterToObjectStore)) {
                 throw new IllegalStateException("Cannot load raw memento with persister "+persistenceStoreAccess);
