@@ -35,8 +35,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import brooklyn.config.BrooklynProperties;
 import brooklyn.config.ConfigKey;
+import brooklyn.config.StringConfigMap;
 import brooklyn.entity.basic.ConfigKeys;
 import brooklyn.entity.rebind.BrooklynObjectType;
 import brooklyn.entity.rebind.PeriodicDeltaChangeListener;
@@ -114,7 +114,7 @@ public class BrooklynMementoPersisterToObjectStore implements BrooklynMementoPer
      */
     private final ReadWriteLock lock = new ReentrantReadWriteLock(true);
 
-    public BrooklynMementoPersisterToObjectStore(PersistenceObjectStore objectStore, BrooklynProperties brooklynProperties, ClassLoader classLoader) {
+    public BrooklynMementoPersisterToObjectStore(PersistenceObjectStore objectStore, StringConfigMap brooklynProperties, ClassLoader classLoader) {
         this.objectStore = checkNotNull(objectStore, "objectStore");
         
         int maxSerializationAttempts = brooklynProperties.getConfig(PERSISTER_MAX_SERIALIZATION_ATTEMPTS);
@@ -462,7 +462,6 @@ public class BrooklynMementoPersisterToObjectStore implements BrooklynMementoPer
     @Beta
     public void checkpoint(BrooklynMementoRawData newMemento, PersistenceExceptionHandler exceptionHandler) {
         checkWritesAllowed();
-        
         try {
             lock.writeLock().lockInterruptibly();
         } catch (InterruptedException e) {
@@ -489,7 +488,6 @@ public class BrooklynMementoPersisterToObjectStore implements BrooklynMementoPer
             } catch (Exception e) {
                 throw Exceptions.propagate(e);
             }
-            
             if (LOG.isDebugEnabled()) LOG.debug("Checkpointed entire memento in {}", Time.makeTimeStringRounded(stopwatch));
         } finally {
             lock.writeLock().unlock();

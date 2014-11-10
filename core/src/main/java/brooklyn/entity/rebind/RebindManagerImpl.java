@@ -393,6 +393,7 @@ public class RebindManagerImpl implements RebindManager {
     @Override
     @VisibleForTesting
     public void forcePersistNow() {
+//        XXX persistenceStoreAccess.checkpoint(memento, exceptionHandler);
         persistenceRealChangeListener.persistNow();
     }
     
@@ -468,6 +469,9 @@ public class RebindManagerImpl implements RebindManager {
      */
     protected BrooklynMementoRawData loadMementoRawData(final RebindExceptionHandler exceptionHandler) {
         try {
+            if (persistenceStoreAccess==null) {
+                throw new IllegalStateException("Persistence not configured; cannot load memento data from persistent backing store");
+            }
             if (!(persistenceStoreAccess instanceof BrooklynMementoPersisterToObjectStore)) {
                 throw new IllegalStateException("Cannot load raw memento with persister "+persistenceStoreAccess);
             }
