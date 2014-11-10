@@ -21,6 +21,7 @@ package brooklyn.catalog.internal;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import brooklyn.basic.BrooklynObjectInternal;
 import brooklyn.catalog.CatalogItem;
 import brooklyn.entity.rebind.RebindSupport;
 import brooklyn.management.ManagementContext;
@@ -28,7 +29,7 @@ import brooklyn.mementos.CatalogItemMemento;
 
 import com.google.common.base.Preconditions;
 
-public class CatalogItemDo<T,SpecT> implements CatalogItem<T,SpecT> {
+public class CatalogItemDo<T,SpecT> implements CatalogItem<T,SpecT>, BrooklynObjectInternal {
 
     protected final CatalogDo catalog;
     protected final CatalogItemDtoAbstract<T,SpecT> itemDto;
@@ -61,7 +62,12 @@ public class CatalogItemDo<T,SpecT> implements CatalogItem<T,SpecT> {
 
     @Override
     public String getCatalogItemId() {
-        return null;
+        return itemDto.getCatalogItemId();
+    }
+    
+    @Override
+    public void setCatalogItemId(String id) {
+        itemDto.setCatalogItemId(id);
     }
 
     @Override
