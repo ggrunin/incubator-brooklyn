@@ -51,7 +51,6 @@ import java.util.regex.Pattern;
 
 import javax.annotation.Nullable;
 
-import org.jclouds.abiquo.compute.options.AbiquoTemplateOptions;
 import org.jclouds.cloudstack.compute.options.CloudStackTemplateOptions;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.RunNodesException;
@@ -1048,14 +1047,6 @@ public class JcloudsLocation extends AbstractCloudMachineProvisioningLocation im
                         } else {
                             LOG.info("ignoring auto-assign-floating-ip({}) in VM creation because not supported for cloud/type ({})", v, t);
                         }
-                    }}) 
-              .put(OVERRIDE_RAM, new CustomizeTemplateOptions() {
-                    public void apply(TemplateOptions t, ConfigBag props, Object v) {
-                        if (t instanceof AbiquoTemplateOptions) {
-                            ((AbiquoTemplateOptions)t).overrideRam((Integer)v);
-                        } else {
-                            LOG.info("ignoring overrideRam({}) in VM creation because not supported for cloud/type ({})", v, t);
-                        }     
                     }})
               .put(NETWORK_NAME, new CustomizeTemplateOptions() {
                     public void apply(TemplateOptions t, ConfigBag props, Object v) {

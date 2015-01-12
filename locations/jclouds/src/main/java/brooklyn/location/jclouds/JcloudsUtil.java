@@ -395,9 +395,9 @@ public class JcloudsUtil implements JcloudsLocationConfig {
                     .modules(ImmutableSet.<Module>of(new SLF4JLoggingModule(), new SshjSshClientModule()))
                     .build(ComputeServiceContext.class);
             DockerApi api = context.unwrapApi(DockerApi.class);
-            Container container = api.getRemoteApi().inspectContainer(containerId);
+            Container container = api.getContainerApi().inspectContainer(containerId);
             Map<Integer, Integer> portMappings = Maps.newLinkedHashMap();
-            Map<String, List<Map<String, String>>> ports = container.getNetworkSettings().getPorts();
+            Map<String, List<Map<String, String>>> ports = container.networkSettings().ports();
             if (ports == null) ports = ImmutableMap.<String, List<Map<String,String>>>of();
             
             LOG.debug("Docker will forward these ports {}", ports);
