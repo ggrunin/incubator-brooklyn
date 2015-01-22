@@ -389,9 +389,13 @@ public class JcloudsUtil implements JcloudsLocationConfig {
     public static Map<Integer, Integer> dockerPortMappingsFor(JcloudsLocation docker, String containerId) {
         ComputeServiceContext context = null;
         try {
+            Properties properties = new Properties();
+            properties.setProperty(Constants.PROPERTY_TRUST_ALL_CERTS, Boolean.toString(true));
+            properties.setProperty(Constants.PROPERTY_RELAX_HOSTNAME, Boolean.toString(true));
             context = ContextBuilder.newBuilder("docker")
                     .endpoint(docker.getEndpoint())
-                    .credentials("docker", "docker")
+                    .credentials(docker.getIdentity(), docker.getCredential())
+                    .overrides(properties)
                     .modules(ImmutableSet.<Module>of(new SLF4JLoggingModule(), new SshjSshClientModule()))
                     .build(ComputeServiceContext.class);
             DockerApi api = context.unwrapApi(DockerApi.class);
