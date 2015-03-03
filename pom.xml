@@ -104,6 +104,14 @@
             <releases> <enabled>false</enabled> </releases>
             <snapshots> <enabled>true</enabled> </snapshots>
         </repository>
+        <!-- Cloudsoft repo, for early custom releases of jclouds-docker -->
+        <repository>
+            <id>libs-release-local</id>
+            <name>libs-release-local</name>
+            <url>http://ccweb.cloudsoftcorp.com/maven/libs-release-local</url>
+            <snapshots> <enabled>false</enabled> </snapshots>
+            <releases> <enabled>true</enabled> </releases>
+        </repository>
     </repositories>
 
     <properties>
@@ -122,8 +130,8 @@
 
         <!-- Dependencies -->
         <brooklyn.version>0.7.0-ea-cloudsoft.1</brooklyn.version>  <!-- BROOKLYN_VERSION -->
-        <jclouds.groupId>org.apache.jclouds</jclouds.groupId>
-        <jclouds.version>2.0.0-SNAPSHOT</jclouds.version>
+        <jclouds.groupId>io.cloudsoft.jclouds</jclouds.groupId>
+        <jclouds.version>1.9.0-ea-cloudsoft.1</jclouds.version>
         <guava.version>17.0</guava.version>
         <groovy.version>2.3.4</groovy.version> <!-- Version supported by https://github.com/groovy/groovy-eclipse/wiki/Groovy-Eclipse-2.9.0-Release-Notes -->
         <logback.version>1.0.7</logback.version>
