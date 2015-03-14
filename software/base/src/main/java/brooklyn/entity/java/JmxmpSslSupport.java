@@ -37,7 +37,7 @@ import com.google.common.base.Preconditions;
 
 public class JmxmpSslSupport {
 
-    final static String BROOKLYN_VERSION = "0.7.0-ea-cloudsoft.1";  // BROOKLYN_VERSION (updated by script)
+    final static String BROOKLYN_VERSION = "0.7.0-ea-cloudsoft.2";  // BROOKLYN_VERSION (updated by script)
     
     private final JmxSupport jmxSupport;
     

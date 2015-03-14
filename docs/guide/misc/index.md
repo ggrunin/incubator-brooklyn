@@ -1,6 +1,6 @@
 ---
 # BROOKLYN_VERSION_BELOW
-title: Other 0.7.0-ea-cloudsoft.1 Resources
+title: Other 0.7.0-ea-cloudsoft.2 Resources
 layout: website-normal
 children:
 - { title: Javadoc, path: javadoc/ }

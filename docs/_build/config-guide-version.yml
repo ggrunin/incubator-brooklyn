@@ -1,6 +1,6 @@
 path:
   # BROOKLYN_VERSION_BELOW
-  guide: /v/0.7.0-ea-cloudsoft.1
+  guide: /v/0.7.0-ea-cloudsoft.2
   # BROOKLYN_VERSION_BELOW
-  style: /v/0.7.0-ea-cloudsoft.1/style
+  style: /v/0.7.0-ea-cloudsoft.2/style
   website: ""
