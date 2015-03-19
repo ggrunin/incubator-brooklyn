@@ -20,6 +20,7 @@ package brooklyn.rest.filter;
 
 import java.io.IOException;
 import java.util.Set;
+
 import javax.servlet.Filter;
 import javax.servlet.FilterChain;
 import javax.servlet.FilterConfig;
@@ -29,11 +30,14 @@ import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
-import com.google.common.collect.Sets;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import brooklyn.config.BrooklynServiceAttributes;
 import brooklyn.management.ManagementContext;
 import brooklyn.management.ha.ManagementNodeState;
+
+import com.google.common.collect.Sets;
 
 /**
  * Checks that the request is appropriate given the high availability status of the server.
@@ -42,7 +46,9 @@ import brooklyn.management.ha.ManagementNodeState;
  */
 public class HaMasterCheckFilter implements Filter {
 
-    public static final String SKIP_CHECK_HEADER = "Brooklyn-Allow-Non-Master-Access";
+    private static final Logger log = LoggerFactory.getLogger(HaMasterCheckFilter.class);
+    
+    private static final String SKIP_CHECK_HEADER = "Brooklyn-Allow-Non-Master-Access";
     private static final Set<String> SAFE_STANDBY_METHODS = Sets.newHashSet("GET", "HEAD");
 
     protected ManagementContext mgmt;
@@ -54,7 +60,8 @@ public class HaMasterCheckFilter implements Filter {
 
     @Override
     public void doFilter(ServletRequest request, ServletResponse response, FilterChain chain) throws IOException, ServletException {
-        if (!isMaster() && isUnsafeRequest(request)) {
+        if (!isMaster() && !isRequestAllowedForNonMaster(request)) {
+            log.warn("Disallowed request to non-HA master: "+request+" (caller should set '"+SKIP_CHECK_HEADER+"' to force)");
             HttpServletResponse httpResponse = (HttpServletResponse) response;
             httpResponse.setStatus(HttpServletResponse.SC_FORBIDDEN);
             httpResponse.setContentType("application/json");
@@ -73,13 +80,18 @@ public class HaMasterCheckFilter implements Filter {
         return ManagementNodeState.MASTER.equals(mgmt.getHighAvailabilityManager().getNodeState());
     }
 
-    private boolean isUnsafeRequest(ServletRequest request) {
+    private boolean isRequestAllowedForNonMaster(ServletRequest request) {
         if (request instanceof HttpServletRequest) {
             HttpServletRequest httpRequest = (HttpServletRequest) request;
             String checkOverridden = httpRequest.getHeader(SKIP_CHECK_HEADER);
+            if ("true".equalsIgnoreCase(checkOverridden)) return true;
+            
             String method = httpRequest.getMethod().toUpperCase();
-            return !"true".equalsIgnoreCase(checkOverridden) && !SAFE_STANDBY_METHODS.contains(method);
+            if (SAFE_STANDBY_METHODS.contains(method)) return true;
+            
+            return false;
         }
+        // previously non-HttpServletRequests were allowed but I don't think they should be
         return false;
     }
 }
