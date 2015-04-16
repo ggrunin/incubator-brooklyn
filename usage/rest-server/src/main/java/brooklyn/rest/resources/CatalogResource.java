@@ -184,6 +184,7 @@ public class CatalogResource extends AbstractBrooklynRestResource implements Cat
                 Predicates.and(CatalogPredicates.<Application,EntitySpec<? extends Application>>deprecated(false),
                         CatalogPredicates.IS_TEMPLATE);
         return getCatalogItemSummariesMatchingRegexFragment(filter, regex, fragment);
+ 
     }
 
     @Override
